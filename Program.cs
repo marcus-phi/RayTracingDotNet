@@ -31,9 +31,21 @@ namespace RayTracingDotNet
 
         private static Vec3 Color(Ray r)
         {
+            if(HitSphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, r))
+                return new Vec3(1.0f, 0.0f, 0.0f);
             var unitDirection = r.Direction.UnitVector();
             var t = 0.5f * unitDirection.Y + 1.0f;
             return (1.0f - t) * new Vec3(1.0f, 1.0f, 1.0f) + t * new Vec3(0.5f, 0.7f, 1.0f);
+        }
+
+        private static bool HitSphere(Vec3 center, float radius, Ray r)
+        {
+            var oc = r.Origin - center;
+            var a = r.Direction.Dot(r.Direction);
+            var b = 2.0f * oc.Dot(r.Direction);
+            var c = oc.Dot(oc) - radius*radius;
+            var discriminant = b*b - 4*a*c;
+            return discriminant > 0;
         }
     }
 }
