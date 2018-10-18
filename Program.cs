@@ -15,12 +15,19 @@ namespace RayTracingDotNet
             var vertical = new Vec3(0.0f, 2.0f, 0.0f);
             var origin = new Vec3(0.0f, 0.0f, 0.0f);
 
+            var world = new HitableList()
+            {
+                new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f),
+                new Sphere(new Vec3(0.0f, -100.5f, -1.0f), 100.0f),
+            };
+
             for(var j = ny-1; j >= 0; j--) {
                 for(var i = 0; i < nx; i++) {
                     var u = (float)i/(float)nx;
                     var v = (float)j/(float)ny;
                     var ray = new Ray(origin, lowerLeftCorner + u*horizontal + v*vertical);
-                    var col = Color(ray);
+                    
+                    var col = Color(ray, world);
                     var ir = (int)(255.99*col[0]);
                     var ig = (int)(255.99*col[1]);
                     var ib = (int)(255.99*col[2]);
@@ -29,23 +36,17 @@ namespace RayTracingDotNet
             }
         }
 
-        private static Vec3 Color(Ray r)
+        private static Vec3 Color(Ray r, HitableList world)
         {
-            if(HitSphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, r))
-                return new Vec3(1.0f, 0.0f, 0.0f);
-            var unitDirection = r.Direction.UnitVector();
-            var t = 0.5f * unitDirection.Y + 1.0f;
-            return (1.0f - t) * new Vec3(1.0f, 1.0f, 1.0f) + t * new Vec3(0.5f, 0.7f, 1.0f);
-        }
-
-        private static bool HitSphere(Vec3 center, float radius, Ray r)
-        {
-            var oc = r.Origin - center;
-            var a = r.Direction.Dot(r.Direction);
-            var b = 2.0f * oc.Dot(r.Direction);
-            var c = oc.Dot(oc) - radius*radius;
-            var discriminant = b*b - 4*a*c;
-            return discriminant > 0;
+            var hitRecord = world.Hit(r, 0.0f, float.MaxValue);
+            if(hitRecord.IsHit)
+                return 0.5f * new Vec3(hitRecord.Normal.X + 1, hitRecord.Normal.Y + 1, hitRecord.Normal.Z + 1);
+            else
+            {
+                var unitDirection = r.Direction.UnitVector();
+                var t = 0.5f * unitDirection.Y + 1.0f;
+                return (1.0f - t) * new Vec3(1.0f, 1.0f, 1.0f) + t * new Vec3(0.5f, 0.7f, 1.0f);
+            }
         }
     }
 }
