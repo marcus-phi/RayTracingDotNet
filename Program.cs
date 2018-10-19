@@ -11,7 +11,7 @@ namespace RayTracingDotNet
             var ns = 100;
             Console.WriteLine(string.Format("P3\n{0} {1}\n255", nx, ny));
 
-            var world = new HitableList()
+            /*var world = new HitableList()
             {
                 new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, new Lambertian(new Vec3(0.8f, 0.3f, 0.3f))),
                 new Sphere(new Vec3(0.0f, -100.5f, -1.0f), 100.0f, new Lambertian(new Vec3(0.8f, 0.8f, 0.0f))),
@@ -20,7 +20,9 @@ namespace RayTracingDotNet
                 // make bubble by having a smaller sphere with negative radius
                 new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Dielectric(1.5f)),
                 new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), -0.45f, new Dielectric(1.5f)),
-            };
+            };*/
+
+            var world = RandomScene();
 
             var lookFrom = new Vec3(3.0f, 3.0f, 2.0f);
             var lookAt = new Vec3(0.0f, 0.0f, -1.0f);
@@ -49,6 +51,39 @@ namespace RayTracingDotNet
                     Console.WriteLine(string.Format("{0} {1} {2}", ir, ig, ib));
                 }
             }
+        }
+
+        private static HitableList RandomScene()
+        {
+            var scene = new HitableList()
+            {
+                new Sphere(new Vec3(0.0f, -1000.0f, 0.0f), 1000.0f, new Lambertian(new Vec3(0.5f, 0.5f, 0.5f))),
+                new Sphere(new Vec3(0.0f, 1.0f, 0.0f), 1.0f, new Dielectric(1.5f)),
+                new Sphere(new Vec3(-4.0f, 1.0f, 0.0f), 1.0f, new Lambertian(new Vec3(4.0f, 2.0f, 1.0f))),
+                new Sphere(new Vec3(4.0f, 1.0f, 0.0f), 1.0f, new Metal(new Vec3(7.0f, 6.0f, 5.0f), 0.0f)),
+            };
+
+            for (var a = -11; a < 11; a++)
+            {
+                for (var b = -11; b < 11; b++)
+                {
+                    var chooseMat = Utils.NextFloat();
+                    var center = new Vec3(a + 0.9f * Utils.NextFloat(), 0.2f, b + 0.9f * Utils.NextFloat());
+                    if ((center - new Vec3(4.0f, 0.2f, 0.0f)).Length > 0.9f)
+                    {
+                        IMaterial material = null;
+                        if (chooseMat < 0.8) //diffuse
+                            material = new Lambertian(new Vec3(Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat()));
+                        else if (chooseMat < 0.95f) //metal
+                            material = new Metal(new Vec3(0.5f * (1 + Utils.NextFloat()), 0.5f * (1 + Utils.NextFloat()), 0.5f * (1 + Utils.NextFloat())), 0.5f * Utils.NextFloat());
+                        else
+                            material = new Dielectric(1.5f);
+                        scene.Add(new Sphere(center, 0.2f, material));
+                    }
+                }
+            }
+
+            return scene;
         }
 
         private static Vec3 Color(Ray r, HitableList world, int depth)
