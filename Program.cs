@@ -4,8 +4,6 @@ namespace RayTracingDotNet
 {
     public class Program
     {
-        private static Random rand = new Random();
-
         public static void Main(string[] args)
         {
             var nx = 200;
@@ -26,8 +24,8 @@ namespace RayTracingDotNet
                     var col = new Vec3();
                     for(var s = 0; s < ns; s++)
                     {
-                        var u = (float)(i + rand.NextDouble())/(float)nx;
-                        var v = (float)(j + rand.NextDouble())/(float)ny;
+                        var u = (float)(i + Utils.NextFloat())/(float)nx;
+                        var v = (float)(j + Utils.NextFloat())/(float)ny;
                         var r = cam.GetRay(u, v);
                         col += Color(r, world);
                     }
@@ -47,7 +45,7 @@ namespace RayTracingDotNet
             var hitRecord = world.Hit(r, 0.001f, float.MaxValue);
             if(hitRecord.IsHit)
             {
-                var target = hitRecord.P + hitRecord.Normal + RandomInUnitSphere();
+                var target = hitRecord.P + hitRecord.Normal + Utils.RandomInUnitSphere();
                 return 0.5f * Color(new Ray(hitRecord.P, target - hitRecord.P), world);
             }
             else
@@ -56,16 +54,6 @@ namespace RayTracingDotNet
                 var t = 0.5f * unitDirection.Y + 1.0f;
                 return (1.0f - t) * new Vec3(1.0f, 1.0f, 1.0f) + t * new Vec3(0.5f, 0.7f, 1.0f);
             }
-        }
-
-        private static Vec3 RandomInUnitSphere()
-        {
-            Vec3 p;
-            do
-            {
-                p = 2.0f * new Vec3((float)rand.NextDouble(), (float)rand.NextDouble(), (float)rand.NextDouble()) - new Vec3(1.0f, 1.0f, 1.0f);
-            } while (p.SqLength >= 1.0f);
-            return p;
         }
     }
 }
