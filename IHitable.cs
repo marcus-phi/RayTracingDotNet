@@ -5,12 +5,11 @@ namespace RayTracingDotNet
 {
     public interface IHitable
     {
-        HitRecord Hit(Ray r, float tMin, float tMax);
+        Result<HitRecord> Hit(Ray r, float tMin, float tMax);
     }
 
     public class HitRecord
     {
-        public bool IsHit { get; set; }
         public float T { get; set; }
         public Vec3 P { get; set; }
         public Vec3 Normal { get; set; }
@@ -19,20 +18,20 @@ namespace RayTracingDotNet
 
     public class HitableList : List<IHitable>, IHitable
     {
-        public HitRecord Hit(Ray r, float tMin, float tMax)
+        public Result<HitRecord> Hit(Ray r, float tMin, float tMax)
         {
-            var hitRecord = new HitRecord();
+            var hitResult = new Result<HitRecord>();
             var closestSoFar = tMax;
-            foreach(var hitable in this)
+            foreach (var hitable in this)
             {
-                var rec = hitable.Hit(r, tMin, closestSoFar);
-                if(rec.IsHit)
+                var temp = hitable.Hit(r, tMin, closestSoFar);
+                if (temp.IsOK)
                 {
-                    closestSoFar = rec.T;
-                    hitRecord = rec;
+                    closestSoFar = temp.Content.T;
+                    hitResult = new Result<HitRecord>(temp.Content);
                 }
             }
-            return hitRecord;
+            return hitResult;
         }
     }
 }

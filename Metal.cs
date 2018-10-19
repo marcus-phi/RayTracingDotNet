@@ -13,16 +13,18 @@ namespace RayTracingDotNet
         public Vec3 Albedo { get; set; }
         public float Fuzz { get; set; }
 
-        public ScatterResult Scatter(Ray ray, HitRecord hitRecord)
+        public Result<Scatter> Scatter(Ray ray, HitRecord hitRecord)
         {
             var reflected = Utils.Reflect(ray.Direction.UnitVector(), hitRecord.Normal);
             var scattered = new Ray(hitRecord.P, reflected + Fuzz * Utils.RandomInUnitSphere());
-            return new ScatterResult()
-            {
-                IsScattered = scattered.Direction.Dot(hitRecord.Normal) > 0,
-                ScatteredRay = scattered,
-                Attenuation = Albedo,
-            };
+
+            return scattered.Direction.Dot(hitRecord.Normal) > 0 ?
+                    new Result<Scatter>(new Scatter
+                    {
+                        ScatteredRay = scattered,
+                        Attenuation = Albedo,
+                    }) :
+                    new Result<Scatter>();
         }
     }
 }

@@ -21,22 +21,24 @@ namespace RayTracingDotNet
 
             var cam = new Camera();
 
-            for(var j = ny-1; j >= 0; j--) {
-                for(var i = 0; i < nx; i++) {
+            for (var j = ny - 1; j >= 0; j--)
+            {
+                for (var i = 0; i < nx; i++)
+                {
                     var col = new Vec3();
-                    for(var s = 0; s < ns; s++)
+                    for (var s = 0; s < ns; s++)
                     {
-                        var u = (float)(i + Utils.NextFloat())/(float)nx;
-                        var v = (float)(j + Utils.NextFloat())/(float)ny;
+                        var u = (float)(i + Utils.NextFloat()) / (float)nx;
+                        var v = (float)(j + Utils.NextFloat()) / (float)ny;
                         var r = cam.GetRay(u, v);
                         col += Color(r, world, 0);
                     }
                     col /= (float)ns;
                     // gamma correction
                     col = new Vec3((float)Math.Sqrt(col.R), (float)Math.Sqrt(col.G), (float)Math.Sqrt(col.B));
-                    var ir = (int)(255.99*col[0]);
-                    var ig = (int)(255.99*col[1]);
-                    var ib = (int)(255.99*col[2]);
+                    var ir = (int)(255.99 * col[0]);
+                    var ig = (int)(255.99 * col[1]);
+                    var ib = (int)(255.99 * col[2]);
                     Console.WriteLine(string.Format("{0} {1} {2}", ir, ig, ib));
                 }
             }
@@ -44,12 +46,12 @@ namespace RayTracingDotNet
 
         private static Vec3 Color(Ray r, HitableList world, int depth)
         {
-            var hitRecord = world.Hit(r, 0.001f, float.MaxValue);
-            if(hitRecord.IsHit)
+            var hitResult = world.Hit(r, 0.001f, float.MaxValue);
+            if (hitResult.IsOK)
             {
-                var scatterResult = hitRecord.Material.Scatter(r, hitRecord);
-                if(depth < 50 && scatterResult.IsScattered)
-                    return scatterResult.Attenuation * Color(scatterResult.ScatteredRay, world, depth+1);
+                var scatterResult = hitResult.Content.Material.Scatter(r, hitResult.Content);
+                if (depth < 50 && scatterResult.IsOK)
+                    return scatterResult.Content.Attenuation * Color(scatterResult.Content.ScatteredRay, world, depth + 1);
                 else
                     return new Vec3();
             }

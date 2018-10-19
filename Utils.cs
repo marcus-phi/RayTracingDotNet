@@ -25,4 +25,18 @@ namespace RayTracingDotNet
             return v - 2 * v.Dot(n) * n;
         }
     }
+
+    public class Result<T>
+        where T : class
+    {
+        public Result() : this(null) { }
+
+        public Result(T content)
+        {
+            Content = content;
+        }
+
+        public bool IsOK { get { return Content != null; } }
+        public T Content { get; private set; }
+    }
 }
