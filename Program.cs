@@ -4,16 +4,14 @@ namespace RayTracingDotNet
 {
     public class Program
     {
+        private static Random rand = new Random();
+
         public static void Main(string[] args)
         {
             var nx = 200;
             var ny = 100;
+            var ns = 100;
             Console.WriteLine(string.Format("P3\n{0} {1}\n255", nx, ny));
-
-            var lowerLeftCorner = new Vec3(-2.0f, -1.0f, -1.0f);
-            var horizontal = new Vec3(4.0f, 0.0f, 0.0f);
-            var vertical = new Vec3(0.0f, 2.0f, 0.0f);
-            var origin = new Vec3(0.0f, 0.0f, 0.0f);
 
             var world = new HitableList()
             {
@@ -21,13 +19,19 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(0.0f, -100.5f, -1.0f), 100.0f),
             };
 
+            var cam = new Camera();
+
             for(var j = ny-1; j >= 0; j--) {
                 for(var i = 0; i < nx; i++) {
-                    var u = (float)i/(float)nx;
-                    var v = (float)j/(float)ny;
-                    var ray = new Ray(origin, lowerLeftCorner + u*horizontal + v*vertical);
-                    
-                    var col = Color(ray, world);
+                    var col = new Vec3();
+                    for(var s = 0; s < ns; s++)
+                    {
+                        var u = (float)(i + rand.NextDouble())/(float)nx;
+                        var v = (float)(j + rand.NextDouble())/(float)ny;
+                        var r = cam.GetRay(u, v);
+                        col += Color(r, world);
+                    }
+                    col /= (float)ns;
                     var ir = (int)(255.99*col[0]);
                     var ig = (int)(255.99*col[1]);
                     var ib = (int)(255.99*col[2]);
