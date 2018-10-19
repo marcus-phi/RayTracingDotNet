@@ -15,6 +15,17 @@ namespace RayTracingDotNet
             } while (p.SqLength >= 1.0f);
             return p;
         }
+
+        public static Vec3 RandomInUnitDisk()
+        {
+            Vec3 p;
+            do
+            {
+                p = 2.0f * new Vec3(NextFloat(), NextFloat(), 0.0f) - new Vec3(1.0f, 1.0f, 0.0f);
+            } while (p.SqLength >= 1.0f);
+            return p;
+        }
+
         public static float NextFloat()
         {
             return (float)Rand.NextDouble();

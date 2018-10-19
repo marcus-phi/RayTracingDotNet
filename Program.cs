@@ -22,7 +22,11 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), -0.45f, new Dielectric(1.5f)),
             };
 
-            var cam = new Camera(new Vec3(-2.0f, 2.0f, 1.0f), new Vec3(0.0f, 0.0f, -1.0f), new Vec3(0.0f, 1.0f, 0.0f), 30.0f, ((float)nx) / ((float)ny));
+            var lookFrom = new Vec3(3.0f, 3.0f, 2.0f);
+            var lookAt = new Vec3(0.0f, 0.0f, -1.0f);
+            var focusDistance = (lookFrom - lookAt).Length;
+            var aperture = 2.0f;
+            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)nx) / ((float)ny), aperture, focusDistance);
 
             for (var j = ny - 1; j >= 0; j--)
             {
