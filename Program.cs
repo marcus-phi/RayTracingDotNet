@@ -32,6 +32,8 @@ namespace RayTracingDotNet
                         col += Color(r, world);
                     }
                     col /= (float)ns;
+                    // gamma correction
+                    col = new Vec3((float)Math.Sqrt(col.R), (float)Math.Sqrt(col.G), (float)Math.Sqrt(col.B));
                     var ir = (int)(255.99*col[0]);
                     var ig = (int)(255.99*col[1]);
                     var ib = (int)(255.99*col[2]);
@@ -42,15 +44,28 @@ namespace RayTracingDotNet
 
         private static Vec3 Color(Ray r, HitableList world)
         {
-            var hitRecord = world.Hit(r, 0.0f, float.MaxValue);
+            var hitRecord = world.Hit(r, 0.001f, float.MaxValue);
             if(hitRecord.IsHit)
-                return 0.5f * new Vec3(hitRecord.Normal.X + 1, hitRecord.Normal.Y + 1, hitRecord.Normal.Z + 1);
+            {
+                var target = hitRecord.P + hitRecord.Normal + RandomInUnitSphere();
+                return 0.5f * Color(new Ray(hitRecord.P, target - hitRecord.P), world);
+            }
             else
             {
                 var unitDirection = r.Direction.UnitVector();
                 var t = 0.5f * unitDirection.Y + 1.0f;
                 return (1.0f - t) * new Vec3(1.0f, 1.0f, 1.0f) + t * new Vec3(0.5f, 0.7f, 1.0f);
             }
+        }
+
+        private static Vec3 RandomInUnitSphere()
+        {
+            Vec3 p;
+            do
+            {
+                p = 2.0f * new Vec3((float)rand.NextDouble(), (float)rand.NextDouble(), (float)rand.NextDouble()) - new Vec3(1.0f, 1.0f, 1.0f);
+            } while (p.SqLength >= 1.0f);
+            return p;
         }
     }
 }
