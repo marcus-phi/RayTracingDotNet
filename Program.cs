@@ -16,7 +16,10 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, new Lambertian(new Vec3(0.8f, 0.3f, 0.3f))),
                 new Sphere(new Vec3(0.0f, -100.5f, -1.0f), 100.0f, new Lambertian(new Vec3(0.8f, 0.8f, 0.0f))),
                 new Sphere(new Vec3(1.0f, 0.0f, -1.0f), 0.5f, new Metal(new Vec3(0.8f, 0.6f, 0.2f), 1.0f)),
-                new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Metal(new Vec3(0.8f, 0.8f, 0.8f), 0.3f)),
+
+                // make bubble by having a smaller sphere with negative radius
+                new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Dielectric(1.5f)),
+                new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), -0.45f, new Dielectric(1.5f)),
             };
 
             var cam = new Camera();

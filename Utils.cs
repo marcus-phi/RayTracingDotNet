@@ -24,6 +24,14 @@ namespace RayTracingDotNet
         {
             return v - 2 * v.Dot(n) * n;
         }
+
+        public static Result<Vec3> Refract(Vec3 v, Vec3 n, float niOverNt)
+        {
+            var uv = v.UnitVector();
+            var dt = uv.Dot(n);
+            var discriminant = 1.0 - niOverNt * niOverNt * (1 - dt * dt);
+            return discriminant > 0 ? new Result<Vec3>(niOverNt * (uv - n * dt) - n * (float)Math.Sqrt(discriminant)) : new Result<Vec3>();
+        }
     }
 
     public class Result<T>
