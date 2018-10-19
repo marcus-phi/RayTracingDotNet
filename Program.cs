@@ -13,8 +13,10 @@ namespace RayTracingDotNet
 
             var world = new HitableList()
             {
-                new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f),
-                new Sphere(new Vec3(0.0f, -100.5f, -1.0f), 100.0f),
+                new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, new Lambertian(new Vec3(0.8f, 0.3f, 0.3f))),
+                new Sphere(new Vec3(0.0f, -100.5f, -1.0f), 100.0f, new Lambertian(new Vec3(0.8f, 0.8f, 0.0f))),
+                new Sphere(new Vec3(1.0f, 0.0f, -1.0f), 0.5f, new Metal(new Vec3(0.8f, 0.6f, 0.2f), 1.0f)),
+                new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Metal(new Vec3(0.8f, 0.8f, 0.8f), 0.3f)),
             };
 
             var cam = new Camera();
@@ -27,7 +29,7 @@ namespace RayTracingDotNet
                         var u = (float)(i + Utils.NextFloat())/(float)nx;
                         var v = (float)(j + Utils.NextFloat())/(float)ny;
                         var r = cam.GetRay(u, v);
-                        col += Color(r, world);
+                        col += Color(r, world, 0);
                     }
                     col /= (float)ns;
                     // gamma correction
@@ -40,13 +42,16 @@ namespace RayTracingDotNet
             }
         }
 
-        private static Vec3 Color(Ray r, HitableList world)
+        private static Vec3 Color(Ray r, HitableList world, int depth)
         {
             var hitRecord = world.Hit(r, 0.001f, float.MaxValue);
             if(hitRecord.IsHit)
             {
-                var target = hitRecord.P + hitRecord.Normal + Utils.RandomInUnitSphere();
-                return 0.5f * Color(new Ray(hitRecord.P, target - hitRecord.P), world);
+                var scatterResult = hitRecord.Material.Scatter(r, hitRecord);
+                if(depth < 50 && scatterResult.IsScattered)
+                    return scatterResult.Attenuation * Color(scatterResult.ScatteredRay, world, depth+1);
+                else
+                    return new Vec3();
             }
             else
             {

@@ -14,6 +14,7 @@ namespace RayTracingDotNet
         public float T { get; set; }
         public Vec3 P { get; set; }
         public Vec3 Normal { get; set; }
+        public IMaterial Material { get; set; }
     }
 
     public class HitableList : List<IHitable>, IHitable
@@ -27,7 +28,7 @@ namespace RayTracingDotNet
                 var rec = hitable.Hit(r, tMin, closestSoFar);
                 if(rec.IsHit)
                 {
-                    closestSoFar = hitRecord.T;
+                    closestSoFar = rec.T;
                     hitRecord = rec;
                 }
             }
