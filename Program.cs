@@ -6,9 +6,9 @@ namespace RayTracingDotNet
     {
         public static void Main(string[] args)
         {
-            var nx = 200;
-            var ny = 100;
-            var ns = 100;
+            var nx = 360;
+            var ny = 240;
+            var ns = 64;
             Console.WriteLine(string.Format("P3\n{0} {1}\n255", nx, ny));
 
             /*var world = new HitableList()
@@ -24,11 +24,11 @@ namespace RayTracingDotNet
 
             var world = RandomScene();
 
-            var lookFrom = new Vec3(3.0f, 3.0f, 2.0f);
-            var lookAt = new Vec3(0.0f, 0.0f, -1.0f);
+            var lookFrom = new Vec3(14.0f, 2.0f, 3.0f);
+            var lookAt = new Vec3(0.0f, 0.5f, 0.0f);
             var focusDistance = (lookFrom - lookAt).Length;
-            var aperture = 2.0f;
-            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)nx) / ((float)ny), aperture, focusDistance);
+            var aperture = 0.05f;
+            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 14.0f, ((float)nx) / ((float)ny), aperture, focusDistance);
 
             for (var j = ny - 1; j >= 0; j--)
             {
@@ -59,8 +59,8 @@ namespace RayTracingDotNet
             {
                 new Sphere(new Vec3(0.0f, -1000.0f, 0.0f), 1000.0f, new Lambertian(new Vec3(0.5f, 0.5f, 0.5f))),
                 new Sphere(new Vec3(0.0f, 1.0f, 0.0f), 1.0f, new Dielectric(1.5f)),
-                new Sphere(new Vec3(-4.0f, 1.0f, 0.0f), 1.0f, new Lambertian(new Vec3(4.0f, 2.0f, 1.0f))),
-                new Sphere(new Vec3(4.0f, 1.0f, 0.0f), 1.0f, new Metal(new Vec3(7.0f, 6.0f, 5.0f), 0.0f)),
+                new Sphere(new Vec3(-4.0f, 1.0f, 0.0f), 1.0f, new Lambertian(new Vec3(0.4f, 0.2f, 0.1f))),
+                new Sphere(new Vec3(4.0f, 1.0f, 0.0f), 1.0f, new Metal(new Vec3(0.7f, 0.6f, 0.5f), 0.0f)),
             };
 
             for (var a = -11; a < 11; a++)
