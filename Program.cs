@@ -16,6 +16,7 @@ namespace RayTracingDotNet
             var outFile = args.Length > 2 ? args[2] : "./debug/output.ppm";
             var stopWatch = new Stopwatch();
             stopWatch.Start();
+            Console.WriteLine("=====================================\n");
             using (var file = new StreamWriter(outFile))
                 Render(sceneDef, file);
             stopWatch.Stop();
@@ -33,7 +34,6 @@ namespace RayTracingDotNet
             Console.WriteLine("CameraLookAt: " + string.Join(", ", sceneDef.CameraLookAt));
             Console.WriteLine("CameraFocusDistance: " + sceneDef.CameraFocusDistance);
             Console.WriteLine("CameraAperture: " + sceneDef.CameraAperture);
-            Console.WriteLine("=====================================");
         }
 
         private static void Render(SceneDefinition sceneDef, StreamWriter outFile)
@@ -59,6 +59,8 @@ namespace RayTracingDotNet
             var aperture = sceneDef.CameraAperture;
             var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)sceneDef.ImageWidth) / ((float)sceneDef.ImageHeight), aperture, focusDistance);
 
+            var totalCount = sceneDef.ImageWidth * sceneDef.ImageHeight;
+            var currentCount = 0;
             for (var j = sceneDef.ImageHeight - 1; j >= 0; j--)
             {
                 for (var i = 0; i < sceneDef.ImageWidth; i++)
@@ -78,6 +80,11 @@ namespace RayTracingDotNet
                     var ig = (int)(255.99 * col[1]);
                     var ib = (int)(255.99 * col[2]);
                     outFile.WriteLine(string.Format("{0} {1} {2}", ir, ig, ib));
+
+                    var percent = (int)(++currentCount * 100 / totalCount);
+                    Console.SetCursorPosition(0, Console.CursorTop - 1);
+                    ClearCurrentConsoleLine();
+                    Console.WriteLine(string.Format("Progress: {0}%", percent));
                 }
             }
         }
@@ -134,5 +141,12 @@ namespace RayTracingDotNet
             }
         }
 
+        private static void ClearCurrentConsoleLine()
+        {
+            var current = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, current);
+        }
     }
 }
