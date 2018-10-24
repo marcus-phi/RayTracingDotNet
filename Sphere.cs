@@ -49,5 +49,10 @@ namespace RayTracingDotNet
                 Material = Material,
             };
         }
+
+        public Result<AABB> BoundingBox()
+        {
+            return new Result<AABB>(new AABB(Center - new Vec3(Radius, Radius, Radius), Center + new Vec3(Radius, Radius, Radius)));
+        }
     }
 }

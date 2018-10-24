@@ -22,7 +22,7 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), -0.45f, new Dielectric(1.5f)),
             };*/
 
-            var world = RandomScene();
+            var world = new BvhNode(RandomScene());
 
             var lookFrom = new Vec3(14.0f, 2.0f, 3.0f);
             var lookAt = new Vec3(0.0f, 0.5f, 0.0f);
@@ -86,7 +86,7 @@ namespace RayTracingDotNet
             return scene;
         }
 
-        private static Vec3 Color(Ray r, HitableList world, int depth)
+        private static Vec3 Color(Ray r, IHitable world, int depth)
         {
             var hitResult = world.Hit(r, 0.001f, float.MaxValue);
             if (hitResult.IsOK)

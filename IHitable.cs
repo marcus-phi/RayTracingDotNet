@@ -6,6 +6,7 @@ namespace RayTracingDotNet
     public interface IHitable
     {
         Result<HitRecord> Hit(Ray r, float tMin, float tMax);
+        Result<AABB> BoundingBox();
     }
 
     public class HitRecord
@@ -32,6 +33,27 @@ namespace RayTracingDotNet
                 }
             }
             return hitResult;
+        }
+
+        public Result<AABB> BoundingBox()
+        {
+            if (Count < 1)
+                return new Result<AABB>();
+
+            var firstBox = this[0].BoundingBox();
+            if (!firstBox.IsOK)
+                return new Result<AABB>();
+
+            var box = firstBox.Content;
+            for (var i = 0; i < Count; i++)
+            {
+                var tempBox = this[i].BoundingBox();
+                if (!tempBox.IsOK)
+                    return new Result<AABB>();
+                box += tempBox.Content;
+            }
+
+            return new Result<AABB>(box);
         }
     }
 }
