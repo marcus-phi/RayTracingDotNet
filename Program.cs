@@ -6,9 +6,9 @@ namespace RayTracingDotNet
     {
         public static void Main(string[] args)
         {
-            var nx = 360;
-            var ny = 240;
-            var ns = 64;
+            var nx = 720;
+            var ny = 480;
+            var ns = 128;
             Console.WriteLine(string.Format("P3\n{0} {1}\n255", nx, ny));
 
             /*var world = new HitableList()
@@ -24,11 +24,11 @@ namespace RayTracingDotNet
 
             var world = new BvhNode(RandomScene());
 
-            var lookFrom = new Vec3(14.0f, 2.0f, 3.0f);
-            var lookAt = new Vec3(0.0f, 0.5f, 0.0f);
-            var focusDistance = (lookFrom - lookAt).Length;
+            var lookFrom = new Vec3(13.0f, 2.0f, 3.0f);
+            var lookAt = new Vec3(0.0f, 0.0f, 0.0f);
+            var focusDistance = 10.0f;
             var aperture = 0.05f;
-            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 14.0f, ((float)nx) / ((float)ny), aperture, focusDistance);
+            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)nx) / ((float)ny), aperture, focusDistance);
 
             for (var j = ny - 1; j >= 0; j--)
             {
