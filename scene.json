@@ -1,0 +1,9 @@
+{
+    "ImageWidth": 720,
+    "ImageHeight": 480,
+    "NumSamples": 128,
+    "CameraLookFrom": [13.0, 2.0, 3.0],
+    "CameraLookAt": [0.0, 0.0, 0.0],
+    "CameraFocusDistance": 10.0,
+    "CameraAperture": 0.05
+}

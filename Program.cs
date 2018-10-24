@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace RayTracingDotNet
 {
@@ -6,10 +9,36 @@ namespace RayTracingDotNet
     {
         public static void Main(string[] args)
         {
-            var nx = 720;
-            var ny = 480;
-            var ns = 128;
-            Console.WriteLine(string.Format("P3\n{0} {1}\n255", nx, ny));
+            var inFile = args.Length > 1 ? args[1] : "./scene.json";
+            var sceneDef = JsonConvert.DeserializeObject<SceneDefinition>(File.ReadAllText(inFile));
+            ShowSceneDef(sceneDef);
+
+            var outFile = args.Length > 2 ? args[2] : "./debug/output.ppm";
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+            using (var file = new StreamWriter(outFile))
+                Render(sceneDef, file);
+            stopWatch.Stop();
+            Console.WriteLine("=====================================");
+            Console.WriteLine("Complete: " + stopWatch.Elapsed.ToString("g"));
+        }
+
+        private static void ShowSceneDef(SceneDefinition sceneDef)
+        {
+            Console.WriteLine("=====================================");
+            Console.WriteLine("ImageWidth: " + sceneDef.ImageWidth);
+            Console.WriteLine("ImageHeight: " + sceneDef.ImageHeight);
+            Console.WriteLine("NumSamples: " + sceneDef.NumSamples);
+            Console.WriteLine("CameraLookFrom: " + string.Join(", ", sceneDef.CameraLookFrom));
+            Console.WriteLine("CameraLookAt: " + string.Join(", ", sceneDef.CameraLookAt));
+            Console.WriteLine("CameraFocusDistance: " + sceneDef.CameraFocusDistance);
+            Console.WriteLine("CameraAperture: " + sceneDef.CameraAperture);
+            Console.WriteLine("=====================================");
+        }
+
+        private static void Render(SceneDefinition sceneDef, StreamWriter outFile)
+        {
+            outFile.WriteLine(string.Format("P3\n{0} {1}\n255", sceneDef.ImageWidth, sceneDef.ImageHeight));
 
             /*var world = new HitableList()
             {
@@ -24,31 +53,31 @@ namespace RayTracingDotNet
 
             var world = new BvhNode(RandomScene());
 
-            var lookFrom = new Vec3(13.0f, 2.0f, 3.0f);
-            var lookAt = new Vec3(0.0f, 0.0f, 0.0f);
-            var focusDistance = 10.0f;
-            var aperture = 0.05f;
-            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)nx) / ((float)ny), aperture, focusDistance);
+            var lookFrom = new Vec3(sceneDef.CameraLookFrom[0], sceneDef.CameraLookFrom[1], sceneDef.CameraLookFrom[2]);
+            var lookAt = new Vec3(sceneDef.CameraLookAt[0], sceneDef.CameraLookAt[1], sceneDef.CameraLookAt[2]);
+            var focusDistance = sceneDef.CameraFocusDistance;
+            var aperture = sceneDef.CameraAperture;
+            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)sceneDef.ImageWidth) / ((float)sceneDef.ImageHeight), aperture, focusDistance);
 
-            for (var j = ny - 1; j >= 0; j--)
+            for (var j = sceneDef.ImageHeight - 1; j >= 0; j--)
             {
-                for (var i = 0; i < nx; i++)
+                for (var i = 0; i < sceneDef.ImageWidth; i++)
                 {
                     var col = new Vec3();
-                    for (var s = 0; s < ns; s++)
+                    for (var s = 0; s < sceneDef.NumSamples; s++)
                     {
-                        var u = (float)(i + Utils.NextFloat()) / (float)nx;
-                        var v = (float)(j + Utils.NextFloat()) / (float)ny;
+                        var u = (float)(i + Utils.NextFloat()) / (float)sceneDef.ImageWidth;
+                        var v = (float)(j + Utils.NextFloat()) / (float)sceneDef.ImageHeight;
                         var r = cam.GetRay(u, v);
                         col += Color(r, world, 0);
                     }
-                    col /= (float)ns;
+                    col /= (float)sceneDef.NumSamples;
                     // gamma correction
                     col = new Vec3((float)Math.Sqrt(col.R), (float)Math.Sqrt(col.G), (float)Math.Sqrt(col.B));
                     var ir = (int)(255.99 * col[0]);
                     var ig = (int)(255.99 * col[1]);
                     var ib = (int)(255.99 * col[2]);
-                    Console.WriteLine(string.Format("{0} {1} {2}", ir, ig, ib));
+                    outFile.WriteLine(string.Format("{0} {1} {2}", ir, ig, ib));
                 }
             }
         }
@@ -104,5 +133,6 @@ namespace RayTracingDotNet
                 return (1.0f - t) * new Vec3(1.0f, 1.0f, 1.0f) + t * new Vec3(0.5f, 0.7f, 1.0f);
             }
         }
+
     }
 }
