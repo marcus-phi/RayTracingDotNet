@@ -51,7 +51,9 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), -0.45f, new Dielectric(1.5f)),
             };*/
 
-            var world = new BvhNode(RandomScene());
+            //var world = new BvhNode(RandomScene());
+
+            var world = TwoPerlinSpheres();
 
             var lookFrom = new Vec3(sceneDef.CameraLookFrom[0], sceneDef.CameraLookFrom[1], sceneDef.CameraLookFrom[2]);
             var lookAt = new Vec3(sceneDef.CameraLookAt[0], sceneDef.CameraLookAt[1], sceneDef.CameraLookAt[2]);
@@ -151,6 +153,16 @@ namespace RayTracingDotNet
             Console.SetCursorPosition(0, Console.CursorTop);
             Console.Write(new string(' ', Console.WindowWidth));
             Console.SetCursorPosition(0, current);
+        }
+
+        private static IHitable TwoPerlinSpheres()
+        {
+            var pertext = new NoiseTexture(4.0f);
+            return new HitableList()
+            {
+                new Sphere(new Vec3(0.0f, -1000.0f, 0.0f), 1000.0f, new Lambertian(pertext)),
+                new Sphere(new Vec3(0.0f, 2.0f, 0.0f), 2.0f, new Lambertian(pertext))
+            };
         }
     }
 }
