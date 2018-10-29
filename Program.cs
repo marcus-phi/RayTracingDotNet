@@ -91,11 +91,15 @@ namespace RayTracingDotNet
 
         private static HitableList RandomScene()
         {
+            var checker = new CheckerTexture(
+                new ConstantTexture(new Vec3(0.2f, 0.3f, 0.1f)),
+                new ConstantTexture(new Vec3(0.9f, 0.9f, 0.9f))
+            );
             var scene = new HitableList()
             {
-                new Sphere(new Vec3(0.0f, -1000.0f, 0.0f), 1000.0f, new Lambertian(new Vec3(0.5f, 0.5f, 0.5f))),
+                new Sphere(new Vec3(0.0f, -1000.0f, 0.0f), 1000.0f, new Lambertian(checker)),
                 new Sphere(new Vec3(0.0f, 1.0f, 0.0f), 1.0f, new Dielectric(1.5f)),
-                new Sphere(new Vec3(-4.0f, 1.0f, 0.0f), 1.0f, new Lambertian(new Vec3(0.4f, 0.2f, 0.1f))),
+                new Sphere(new Vec3(-4.0f, 1.0f, 0.0f), 1.0f, new Lambertian(new ConstantTexture(new Vec3(0.4f, 0.2f, 0.1f)))),
                 new Sphere(new Vec3(4.0f, 1.0f, 0.0f), 1.0f, new Metal(new Vec3(0.7f, 0.6f, 0.5f), 0.0f)),
             };
 
@@ -109,7 +113,7 @@ namespace RayTracingDotNet
                     {
                         IMaterial material = null;
                         if (chooseMat < 0.8) //diffuse
-                            material = new Lambertian(new Vec3(Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat()));
+                            material = new Lambertian(new ConstantTexture(new Vec3(Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat())));
                         else if (chooseMat < 0.95f) //metal
                             material = new Metal(new Vec3(0.5f * (1 + Utils.NextFloat()), 0.5f * (1 + Utils.NextFloat()), 0.5f * (1 + Utils.NextFloat())), 0.5f * Utils.NextFloat());
                         else

@@ -4,12 +4,12 @@ namespace RayTracingDotNet
 {
     public class Lambertian : IMaterial
     {
-        public Lambertian(Vec3 albedo)
+        public Lambertian(ITexture albedo)
         {
             Albedo = albedo;
         }
 
-        public Vec3 Albedo { get; set; }
+        public ITexture Albedo { get; private set; }
 
         public Result<Scatter> Scatter(Ray ray, HitRecord hitRecord)
         {
@@ -17,7 +17,7 @@ namespace RayTracingDotNet
             return new Result<Scatter>(new Scatter()
             {
                 ScatteredRay = new Ray(hitRecord.P, target - hitRecord.P),
-                Attenuation = Albedo,
+                Attenuation = Albedo.Value(0, 0, hitRecord.P),
             });
         }
     }
