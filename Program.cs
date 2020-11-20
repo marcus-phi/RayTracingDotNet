@@ -9,11 +9,11 @@ namespace RayTracingDotNet
     {
         public static void Main(string[] args)
         {
-            var inFile = args.Length > 1 ? args[1] : "./scene.json";
+            var inFile = args.Length > 0 ? args[0] : "./scene.json";
             var sceneDef = JsonConvert.DeserializeObject<SceneDefinition>(File.ReadAllText(inFile));
             ShowSceneDef(sceneDef);
 
-            var outFile = args.Length > 2 ? args[2] : "./debug/output.ppm";
+            var outFile = args.Length > 1 ? args[1] : "./bin/Debug/output.ppm";
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             Console.WriteLine("=====================================\n");
@@ -51,9 +51,9 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(-1.0f, 0.0f, -1.0f), -0.45f, new Dielectric(1.5f)),
             };*/
 
-            //var world = new BvhNode(RandomScene());
+            var world = new BvhNode(RandomScene());
 
-            var world = TwoPerlinSpheres();
+            // var world = TwoPerlinSpheres();
 
             var lookFrom = new Vec3(sceneDef.CameraLookFrom[0], sceneDef.CameraLookFrom[1], sceneDef.CameraLookFrom[2]);
             var lookAt = new Vec3(sceneDef.CameraLookAt[0], sceneDef.CameraLookAt[1], sceneDef.CameraLookAt[2]);
