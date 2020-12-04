@@ -23,7 +23,7 @@ namespace RayTracingDotNet
             {
                 outwardNormal = -hitRecord.Normal;
                 niOverNt = RefIdx;
-                cosine = RefIdx * ray.Direction.Dot(hitRecord.Normal) / ray.Direction.Length;
+                cosine = ray.Direction.Dot(hitRecord.Normal) / ray.Direction.Length;
             }
             else
             {
