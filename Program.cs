@@ -1,11 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace RayTracingDotNet
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -13,12 +14,14 @@ namespace RayTracingDotNet
             var sceneDef = JsonConvert.DeserializeObject<SceneDefinition>(File.ReadAllText(inFile));
             ShowSceneDef(sceneDef);
 
-            var outFile = args.Length > 1 ? args[1] : "./bin/Debug/output.ppm";
+            var outFile = args.Length > 1 ? args[1] : "./output.ppm";
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             Console.WriteLine("=====================================\n");
-            using (var file = new StreamWriter(outFile))
-                Render(sceneDef, file);
+            var sb = new StringBuilder();
+            Render(sceneDef, sb);
+            using (var file = new StreamWriter(outFile, false, Encoding.Default, 65536))
+                file.Write(sb);
             stopWatch.Stop();
             Console.WriteLine("=====================================");
             Console.WriteLine("Complete: " + stopWatch.Elapsed.ToString("g"));
@@ -36,10 +39,13 @@ namespace RayTracingDotNet
             Console.WriteLine("CameraAperture: " + sceneDef.CameraAperture);
         }
 
-        private static void Render(SceneDefinition sceneDef, StreamWriter outFile)
+        private static void Render(SceneDefinition sceneDef, StringBuilder output)
         {
-            outFile.WriteLine(string.Format("P3\n{0} {1}\n255", sceneDef.ImageWidth, sceneDef.ImageHeight));
-
+            var sw = new Stopwatch();
+            sw.Start();
+            
+            output.AppendLine($"P3\n{sceneDef.ImageWidth} {sceneDef.ImageHeight}\n255");
+            
             /*var world = new HitableList()
             {
                 new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, new Lambertian(new Vec3(0.8f, 0.3f, 0.3f))),
@@ -59,7 +65,7 @@ namespace RayTracingDotNet
             var lookAt = new Vec3(sceneDef.CameraLookAt[0], sceneDef.CameraLookAt[1], sceneDef.CameraLookAt[2]);
             var focusDistance = sceneDef.CameraFocusDistance;
             var aperture = sceneDef.CameraAperture;
-            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, ((float)sceneDef.ImageWidth) / ((float)sceneDef.ImageHeight), aperture, focusDistance);
+            var cam = new Camera(lookFrom, lookAt, new Vec3(0.0f, 1.0f, 0.0f), 20.0f, sceneDef.ImageWidth / (float)sceneDef.ImageHeight, aperture, focusDistance);
 
             var totalCount = sceneDef.ImageWidth * sceneDef.ImageHeight;
             var currentCount = 0;
@@ -70,23 +76,26 @@ namespace RayTracingDotNet
                     var col = new Vec3();
                     for (var s = 0; s < sceneDef.NumSamples; s++)
                     {
-                        var u = (float)(i + Utils.NextFloat()) / (float)sceneDef.ImageWidth;
-                        var v = (float)(j + Utils.NextFloat()) / (float)sceneDef.ImageHeight;
+                        var u = (i + Utils.NextFloat()) / sceneDef.ImageWidth;
+                        var v = (j + Utils.NextFloat()) / sceneDef.ImageHeight;
                         var r = cam.GetRay(u, v);
                         col += Color(r, world, 0);
                     }
-                    col /= (float)sceneDef.NumSamples;
+                    col /= sceneDef.NumSamples;
                     // gamma correction
                     col = new Vec3((float)Math.Sqrt(col.R), (float)Math.Sqrt(col.G), (float)Math.Sqrt(col.B));
                     var ir = (int)(255.99 * col[0]);
                     var ig = (int)(255.99 * col[1]);
                     var ib = (int)(255.99 * col[2]);
-                    outFile.WriteLine(string.Format("{0} {1} {2}", ir, ig, ib));
+                    output.AppendLine($"{ir} {ig} {ib}");
 
-                    var percent = (int)(++currentCount * 100 / totalCount);
+                    var percent = ++currentCount * 100 / totalCount;
+                    var elapsedStr = $"{sw.Elapsed.Hours:00}:{sw.Elapsed.Minutes:00}:{sw.Elapsed.Seconds:00}";
+                    var eta = percent > 0 ? sw.Elapsed / percent * 100 : TimeSpan.Zero;
+                    var etaStr = $"{eta.Hours:00}:{eta.Minutes:00}:{eta.Seconds:00}";
                     Console.SetCursorPosition(0, Console.CursorTop - 1);
                     ClearCurrentConsoleLine();
-                    Console.WriteLine(string.Format("Progress: {0}%", percent));
+                    Console.WriteLine($"Progress: {percent}%, elapsed: {elapsedStr}, eta: {etaStr}");
                 }
             }
         }
@@ -113,7 +122,7 @@ namespace RayTracingDotNet
                     var center = new Vec3(a + 0.9f * Utils.NextFloat(), 0.2f, b + 0.9f * Utils.NextFloat());
                     if ((center - new Vec3(4.0f, 0.2f, 0.0f)).Length > 0.9f)
                     {
-                        IMaterial material = null;
+                        IMaterial material;
                         if (chooseMat < 0.8) //diffuse
                             material = new Lambertian(new ConstantTexture(new Vec3(Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat(), Utils.NextFloat() * Utils.NextFloat())));
                         else if (chooseMat < 0.95f) //metal
