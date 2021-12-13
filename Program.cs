@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace RayTracingDotNet
@@ -24,7 +28,7 @@ namespace RayTracingDotNet
                 file.Write(sb);
             stopWatch.Stop();
             Console.WriteLine("=====================================");
-            Console.WriteLine("Complete: " + stopWatch.Elapsed.ToString("g"));
+            Console.WriteLine($"Complete: {stopWatch.Elapsed:g}");
         }
 
         private static void ShowSceneDef(SceneDefinition sceneDef)
@@ -33,6 +37,7 @@ namespace RayTracingDotNet
             Console.WriteLine("ImageWidth: " + sceneDef.ImageWidth);
             Console.WriteLine("ImageHeight: " + sceneDef.ImageHeight);
             Console.WriteLine("NumSamples: " + sceneDef.NumSamples);
+            Console.WriteLine("ChunkSize: " + sceneDef.ChunkSize);
             Console.WriteLine("CameraLookFrom: " + string.Join(", ", sceneDef.CameraLookFrom));
             Console.WriteLine("CameraLookAt: " + string.Join(", ", sceneDef.CameraLookAt));
             Console.WriteLine("CameraFocusDistance: " + sceneDef.CameraFocusDistance);
@@ -41,11 +46,6 @@ namespace RayTracingDotNet
 
         private static void Render(SceneDefinition sceneDef, StringBuilder output)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-            
-            output.AppendLine($"P3\n{sceneDef.ImageWidth} {sceneDef.ImageHeight}\n255");
-            
             /*var world = new HitableList()
             {
                 new Sphere(new Vec3(0.0f, 0.0f, -1.0f), 0.5f, new Lambertian(new Vec3(0.8f, 0.3f, 0.3f))),
@@ -69,35 +69,50 @@ namespace RayTracingDotNet
 
             var totalCount = sceneDef.ImageWidth * sceneDef.ImageHeight;
             var currentCount = 0;
-            for (var j = sceneDef.ImageHeight - 1; j >= 0; j--)
-            {
-                for (var i = 0; i < sceneDef.ImageWidth; i++)
-                {
-                    var col = new Vec3();
-                    for (var s = 0; s < sceneDef.NumSamples; s++)
-                    {
-                        var u = (i + Utils.NextFloat()) / sceneDef.ImageWidth;
-                        var v = (j + Utils.NextFloat()) / sceneDef.ImageHeight;
-                        var r = cam.GetRay(u, v);
-                        col += Color(r, world, 0);
-                    }
-                    col /= sceneDef.NumSamples;
-                    // gamma correction
-                    col = new Vec3((float)Math.Sqrt(col.R), (float)Math.Sqrt(col.G), (float)Math.Sqrt(col.B));
-                    var ir = (int)(255.99 * col[0]);
-                    var ig = (int)(255.99 * col[1]);
-                    var ib = (int)(255.99 * col[2]);
-                    output.AppendLine($"{ir} {ig} {ib}");
 
-                    var percent = ++currentCount * 100 / totalCount;
-                    var elapsedStr = $"{sw.Elapsed.Hours:00}:{sw.Elapsed.Minutes:00}:{sw.Elapsed.Seconds:00}";
-                    var eta = percent > 0 ? sw.Elapsed / percent * 100 : TimeSpan.Zero;
-                    var etaStr = $"{eta.Hours:00}:{eta.Minutes:00}:{eta.Seconds:00}";
-                    Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    ClearCurrentConsoleLine();
-                    Console.WriteLine($"Progress: {percent}%, elapsed: {elapsedStr}, eta: {etaStr}");
+            var sw = new Stopwatch();
+            sw.Start();
+            
+            output.AppendLine($"P3\n{sceneDef.ImageWidth} {sceneDef.ImageHeight}\n255");
+
+            if (sceneDef.ChunkSize > 0)
+            {
+                var chunks = Enumerable.Range(0, totalCount).Chunk(sceneDef.ChunkSize * sceneDef.ChunkSize).ToArray();
+                var bag = new ConcurrentBag<Tuple<int, StringBuilder>>();
+                var progress = new Progress<int>(cnt => ReportProgress(cnt, totalCount, sw.Elapsed)) as IProgress<int>;
+                Parallel.ForEach(chunks, chunk =>
+                {
+                    var chunkOutput = new StringBuilder();
+                    foreach (var idx in chunk)
+                    {
+                        var i = idx % sceneDef.ImageWidth;
+                        var j = sceneDef.ImageHeight - 1 - idx / sceneDef.ImageWidth;
+                        
+                        RenderPart(i, j, sceneDef, cam, world, chunkOutput);
+
+                        Interlocked.Increment(ref currentCount);
+                        progress.Report(currentCount);
+                    }
+                    bag.Add(new Tuple<int, StringBuilder>(chunk.First(), chunkOutput));
+                });
+
+                foreach (var tuple in bag.OrderBy(x => x.Item1))
+                    output.Append(tuple.Item2);
+            }
+            else
+            {
+                for (var j = sceneDef.ImageHeight - 1; j >= 0; j--)
+                {
+                    for (var i = 0; i < sceneDef.ImageWidth; i++)
+                    {
+                        RenderPart(i, j, sceneDef, cam, world, output);
+                        ReportProgress(++currentCount, totalCount, sw.Elapsed);
+                    }
                 }
             }
+            
+            sw.Stop();
+            Console.WriteLine($"\nElapsed: {sw.Elapsed.Hours:00}:{sw.Elapsed.Minutes:00}:{sw.Elapsed.Seconds:00}");
         }
 
         private static HitableList RandomScene()
@@ -156,14 +171,6 @@ namespace RayTracingDotNet
             }
         }
 
-        private static void ClearCurrentConsoleLine()
-        {
-            var current = Console.CursorTop;
-            Console.SetCursorPosition(0, Console.CursorTop);
-            Console.Write(new string(' ', Console.WindowWidth));
-            Console.SetCursorPosition(0, current);
-        }
-
         private static IHitable TwoPerlinSpheres()
         {
             var pertext = new NoiseTexture(4.0f);
@@ -172,6 +179,34 @@ namespace RayTracingDotNet
                 new Sphere(new Vec3(0.0f, -1000.0f, 0.0f), 1000.0f, new Lambertian(pertext)),
                 new Sphere(new Vec3(0.0f, 2.0f, 0.0f), 2.0f, new Lambertian(pertext))
             };
+        }
+
+        private static void RenderPart(int i, int j, SceneDefinition sceneDef, Camera cam, IHitable world, StringBuilder output)
+        {
+            var col = new Vec3();
+            for (var s = 0; s < sceneDef.NumSamples; s++)
+            {
+                var u = (i + Utils.NextFloat()) / sceneDef.ImageWidth;
+                var v = (j + Utils.NextFloat()) / sceneDef.ImageHeight;
+                var r = cam.GetRay(u, v);
+                col += Color(r, world, 0);
+            }
+            col /= sceneDef.NumSamples;
+            // gamma correction
+            col = new Vec3((float)Math.Sqrt(col.R), (float)Math.Sqrt(col.G), (float)Math.Sqrt(col.B));
+            var ir = (int)(255.99 * col[0]);
+            var ig = (int)(255.99 * col[1]);
+            var ib = (int)(255.99 * col[2]);
+            output.AppendLine($"{ir} {ig} {ib}");
+        }
+
+        private static void ReportProgress(int currentCount, int totalCount, TimeSpan elapsed)
+        {
+            var percent = currentCount * 100.0f / totalCount;
+            var eta = percent > 0 ? elapsed / percent * 100 : TimeSpan.Zero;
+
+            Console.CursorLeft = 0;
+            Console.Write($"Progress: {percent:F2}%, elapsed: {elapsed:g}, eta: {eta:g}");
         }
     }
 }
